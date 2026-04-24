@@ -54,7 +54,7 @@ def main():
 
     # ИСПОЛЬЗУЕМ ОТНОСИТЕЛЬНЫЕ ПУТИ
     # Путь строится относительно папки, где лежит этот скрипт
-    font_folder = "ponts" # Убедитесь, что папка называется именно так (через P)
+    font_folder = "ponts" 
     font_name = "circular-std-4.ttf"
     
     font_path = os.path.join(font_folder, font_name)
@@ -64,7 +64,7 @@ def main():
     font_status = get_font(font_path, 22)
     font_info   = get_font(font_path, 18)
 
-    # Инициализация плеера (убедитесь, что папка 'music' существует)
+    # Инициализация плеера 
     player = MusicPlayer(music_folder="music")
 
     running = True
@@ -89,7 +89,7 @@ def main():
         player.update()
         screen.fill(COLOR_BG)
 
-        title_surf = font_title.render("Music Player By okapinosik", True, COLOR_ACCENT)
+        title_surf = font_title.render("Music Player ", True, COLOR_ACCENT)
         screen.blit(title_surf, title_surf.get_rect(center=(SCREEN_WIDTH // 2, 45)))
 
         panel_rect = pygame.Rect(40, 100, SCREEN_WIDTH - 80, 130)
