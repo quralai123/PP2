@@ -39,6 +39,7 @@ class Playing:
                 elif event.key == K_RIGHT:
                     self.game.snake.change_direction('RIGHT')
         
+    # Находим метод update в классе Playing и заменяем проверку столкновения:
     def update(self):
         ate_food = (self.game.snake.body[0] == self.game.food.position)
         self.game.snake.move(grow=ate_food)
@@ -52,8 +53,10 @@ class Playing:
             if self.score % 5 == 0 and self.level < 3:
                 self.level += 1    
             
-        if (head in self.game.snake.body[1:] or
-            head[0] < 0 or head[0] >= 600 or head[1] < 0 or head[1] >= 600):
+        # ТЕПЕРЬ ТУТ ТОЛЬКО ОДНО УСЛОВИЕ:
+        # Игра заканчивается, только если голова врезалась в хвост.
+        # Проверку на < 0 или >= 600 мы удалили.
+        if head in self.game.snake.body[1:]:
             self.game.state = GameOver(self.game)
         
     def draw(self, screen):

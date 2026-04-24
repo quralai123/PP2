@@ -5,6 +5,7 @@ class Snake:
         self.body = [(100, 100), (80, 100), (60, 100)]
         self.direction = 'RIGHT'
     
+    # Находим метод move в классе Snake и заменяем его на этот:
     def move(self, grow=False):
         head_x, head_y = self.body[0]
         if self.direction == 'RIGHT':
@@ -16,10 +17,15 @@ class Snake:
         elif self.direction == 'DOWN':
             new_head = (head_x, head_y + 20)
             
+        # ТЕЛЕПОРТАЦИЯ:
+        # Берем остаток от деления на ширину/высоту (600), 
+        # чтобы голова вылетала с другой стороны
+        new_head = (new_head[0] % 600, new_head[1] % 600)
+            
         self.body.insert(0, new_head)
         if not grow:
             self.body.pop()
-        
+            
     def change_direction(self, new_direction):
         opposite = {'RIGHT': 'LEFT', 'LEFT': 'RIGHT', 'UP': 'DOWN', 'DOWN': 'UP'}
         if new_direction != opposite[self.direction]:
