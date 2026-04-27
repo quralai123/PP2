@@ -47,24 +47,17 @@ class Player(pygame.sprite.Sprite):
 class Coin(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        # Загружаем базовое изображение один раз при создании
         self.original_image = pygame.image.load("C:/Users/suanb/Desktop/pp2/Practice10/carracer/images_and_sounds/Coin.png")
         self.rect = self.original_image.get_rect()
         self.reset()
 
     def reset(self):
-        # 1. Генерируем случайный вес (от 1 до 5)
-        self.weight = random.randint(1, 5)
-        
-        # 2. МЕНЯЕМ РАЗМЕР в зависимости от веса (ВАША СТРОКА ТУТ)
-        # Мы используем self.original_image, чтобы качество не портилось при масштабировании
+        self.weight = random.randint(1, 5)     
         new_size = 20 + self.weight * 5
         self.image = pygame.transform.scale(self.original_image, (new_size, new_size))
-        
-        # 3. Обновляем rect, так как размер картинки изменился
         self.rect = self.image.get_rect()
         
-        # 4. Ставим в случайную позицию наверху
+        
         self.rect.top = -50
         self.rect.left = random.randint(20, WIDTH - self.rect.width - 20)
 

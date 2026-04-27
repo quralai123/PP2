@@ -2,16 +2,20 @@ import pygame
 import sys
 import math
 
+# Инициализация
 pygame.init()
 
+# Настройки экрана
 WIDTH, HEIGHT = 1100, 750 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (220, 220, 220)
 DARK_GRAY = (180, 180, 180)
 BLUE_SELECT = (0, 120, 215) 
+
 PALETTE = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 0, 0)]
 
+# Добавили 'Brush' в начало списка инструментов
 TOOLS = [
     ('Brush', 'brush'), ('Rect', 'rectangle'), ('Circle', 'circle'), 
     ('Square', 'square'), ('R-Tri', 'right_triangle'), 
@@ -48,10 +52,10 @@ def main():
     
     font = pygame.font.SysFont("Arial", 14, bold=True)
     current_color = PALETTE[0]
-    mode = 'brush' 
+    mode = 'brush' # Теперь кисть по умолчанию
     drawing = False
     start_pos = None
-    last_pos = None 
+    last_pos = None # Нужно для плавности кисти
 
     while True:
         screen.fill(WHITE)
@@ -63,7 +67,7 @@ def main():
             
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
-                if y < 60: 
+                if y < 60: # Клик в меню
                     for i, col in enumerate(PALETTE):
                         if pygame.Rect(10 + i * 40, 15, 30, 30).collidepoint(x, y):
                             current_color = col
@@ -78,6 +82,7 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if drawing:
+                    # Фиксируем фигуру, если это не кисть и не ластик
                     if mode not in ['brush', 'erase']:
                         draw_shape(canvas, mode, start_pos, event.pos, current_color, 2)
                     drawing = False
@@ -85,6 +90,7 @@ def main():
             if event.type == pygame.MOUSEMOTION:
                 if drawing:
                     curr_pos = event.pos
+                    # КИСТЬ И ЛАСТИК рисуют сразу на холсте (canvas)
                     if mode == 'brush':
                         pygame.draw.line(canvas, current_color, last_pos, curr_pos, 3)
                         last_pos = curr_pos
@@ -92,10 +98,12 @@ def main():
                         pygame.draw.circle(canvas, WHITE, curr_pos, 20)
                         last_pos = curr_pos
 
+        # ОТРИСОВКА ПРЕВЬЮ ДЛЯ ФИГУР
         if drawing and mode not in ['brush', 'erase']:
             curr_pos = pygame.mouse.get_pos()
             draw_shape(screen, mode, start_pos, curr_pos, current_color, 2)
 
+        # РИСУЕМ ПАНЕЛЬ (UI)
         pygame.draw.rect(screen, GRAY, (0, 0, WIDTH, 60))
         pygame.draw.line(screen, BLACK, (0, 60), (WIDTH, 60), 2)
         
@@ -113,7 +121,7 @@ def main():
             screen.blit(text, text.get_rect(center=btn_rect.center))
 
         pygame.display.flip()
-        clock.tick(120) 
+        clock.tick(120) # 120 FPS для плавности кисти
 
 if __name__ == "__main__":
     main()

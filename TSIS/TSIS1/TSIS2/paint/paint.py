@@ -7,6 +7,7 @@ def main():
     clock = pygame.time.Clock()
     
     radius = 10
+    mode = 'blue'  # Режимы: 'red', 'green', 'blue', 'rect', 'circle'
     points = []
     
     drawing = False
@@ -22,45 +23,54 @@ def main():
             
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE: return
+                
+                # Переключение режимов
                 if event.key == pygame.K_r: mode = 'red'
                 elif event.key == pygame.K_g: mode = 'green'
                 elif event.key == pygame.K_b: mode = 'blue'
-                elif event.key == pygame.K_s: mode = 'rect'   
-                elif event.key == pygame.K_c: mode = 'circle' 
+                elif event.key == pygame.K_s: mode = 'rect'   # S - Square (Rect)
+                elif event.key == pygame.K_c: mode = 'circle' # C - Circle
             
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1: 
+                if event.button == 1: # ЛКМ
                     drawing = True
                     start_pos = event.pos
                     if mode in ['red', 'green', 'blue']:
                         points.append(event.pos)
                 
-                if event.button == 4: 
+                # Изменение радиуса (толщины)
+                if event.button == 4: # Колесико вверх
                     radius = min(200, radius + 2)
-                elif event.button == 5: 
+                elif event.button == 5: # Колесико вниз
                     radius = max(1, radius - 2)
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     drawing = False
+                    # Если нужно, чтобы фигуры оставались, их нужно сохранять в отдельный список
+                    # Но сейчас они работают как "превью"
 
             if event.type == pygame.MOUSEMOTION:
                 if drawing and mode in ['red', 'green', 'blue']:
                     position = event.pos
                     points.append(position)
-                    points = points[-256:] 
+                    points = points[-256:] # Ограничение длины шлейфа
 
+        # --- ОТРИСОВКА ШЛЕЙФА ---
         if mode in ['red', 'green', 'blue']:
             i = 0
             while i < len(points) - 1:
                 drawLineBetween(screen, i, points[i], points[i + 1], radius, mode)
                 i += 1
 
+        # --- ОТРИСОВКА ФИГУР (ПРЕВЬЮ) ---
         if drawing and start_pos and mode in ['rect', 'circle']:
             current_pos = pygame.mouse.get_pos()
+            # Цвет для фигур сделаем ярким
             color = (255, 255, 255)
             
             if mode == 'rect':
+                # Вычисляем rect (x, y, width, height)
                 x = min(start_pos[0], current_pos[0])
                 y = min(start_pos[1], current_pos[1])
                 width = abs(current_pos[0] - start_pos[0])
@@ -68,6 +78,7 @@ def main():
                 pygame.draw.rect(screen, color, (x, y, width, height), radius)
             
             elif mode == 'circle':
+                # Радиус — расстояние от центра до курсора
                 r = int(math.hypot(current_pos[0] - start_pos[0], current_pos[1] - start_pos[1]))
                 pygame.draw.circle(screen, color, start_pos, r, radius)
 
@@ -75,6 +86,7 @@ def main():
         clock.tick(60)
 
 def drawLineBetween(screen, index, start, end, width, color_mode):
+    # Логика затухания цвета
     c1 = max(0, min(255, 2 * index - 256))
     c2 = max(0, min(255, 2 * index))
     

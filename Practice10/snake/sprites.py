@@ -17,7 +17,6 @@ class Snake:
         elif self.direction == 'DOWN':
             new_head = (head_x, head_y + 20)
         
-        # Телепортация через границы экрана
         new_head = (new_head[0] % 600, new_head[1] % 600)
             
         self.body.insert(0, new_head)
@@ -38,21 +37,15 @@ class Food:
         self.respawn([])
         
     def respawn(self, snake_body):
-        # Генерируем новую позицию, которой нет в теле змейки
         while True:
             new_pos = (random.randrange(0, 600, 20), random.randrange(0, 600, 20))
             if new_pos not in snake_body:
                 self.position = new_pos
                 break
         
-        # Требование: Randomly generating food with different weights
-        # Вес еды будет влиять на то, сколько очков получит игрок
         self.weight = random.randint(1, 3)
-        
-        # Фиксируем время появления для таймера исчезновения
         self.spawn_time = pygame.time.get_ticks()
 
     def is_expired(self):
-        # Требование: Foods which are disappearing after some time
         current_time = pygame.time.get_ticks()
         return current_time - self.spawn_time > self.lifetime

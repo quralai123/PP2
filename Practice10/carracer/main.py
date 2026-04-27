@@ -6,7 +6,6 @@ import sprites
 
 def main():
     pygame.init()
-    # Сбрасываем статы при старте
     sprites.SCORE = 0
     sprites.SPEED = 3
 
@@ -37,7 +36,6 @@ def main():
     all_sprites.add(E1)
     all_sprites.add(C) 
 
-    # Переменные для анимации бесконечного фона
     bg_y1 = 0
     bg_y2 = -sprites.HEIGHT
 
@@ -47,7 +45,6 @@ def main():
                 pygame.quit()
                 sys.exit()
         
-        # Движение фона
         bg_y1 += sprites.SPEED
         bg_y2 += sprites.SPEED
         if bg_y1 >= sprites.HEIGHT: bg_y1 = -sprites.HEIGHT
@@ -56,16 +53,13 @@ def main():
         SCREEN.blit(background, (0, bg_y1))
         SCREEN.blit(background, (0, bg_y2))
 
-        # Отрисовка счета
         scores = font_small.render("SCORES: " + str(sprites.SCORE), True, sprites.GREEN)        
         SCREEN.blit(scores, (10, 10))
         
-        # Обновление и отрисовка всех объектов
         for entity in all_sprites:
             SCREEN.blit(entity.image, entity.rect)
             entity.move()
             
-        # Проверка столкновения с врагом
         if pygame.sprite.spritecollideany(P1, enemies):
             pygame.mixer.Sound("C:/Users/suanb/Desktop/pp2/Practice10/carracer/images_and_sounds/accident.mp3").play()
             time.sleep(0.5)
@@ -92,18 +86,15 @@ def main():
                             pygame.quit()
                             sys.exit()
             
-        # Проверка сбора монет
         collided_coin = pygame.sprite.spritecollideany(P1, coins)
         if collided_coin:
-            # 1. Прибавляем вес монетки (Разный вес монет)
             sprites.SCORE += collided_coin.weight 
             
-            # 2. Увеличиваем скорость врагов каждые 10 очков (N монет)
             if sprites.SCORE % 10 == 0:
                 sprites.SPEED += 0.5
             
             pygame.mixer.Sound("C:/Users/suanb/Desktop/pp2/Practice10/carracer/images_and_sounds/coin_taken.wav").play()
-            collided_coin.reset() # Используем метод из sprites.py для респауна
+            collided_coin.reset() 
         
         pygame.display.update()
         FramePerSec.tick(FPS)

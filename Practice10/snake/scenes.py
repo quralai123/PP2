@@ -26,7 +26,7 @@ class Playing:
         self.score = 0
         self.level = 1
         self.game.snake.__init__()
-        self.game.food.respawn(self.game.snake.body) # Пересоздаем еду при старте
+        self.game.food.respawn(self.game.snake.body) 
         
     def handle_events(self, events):
         for event in events:
@@ -37,10 +37,7 @@ class Playing:
                 elif event.key == K_RIGHT: self.game.snake.change_direction('RIGHT')
         
     def update(self):
-        # Проверяем, съела ли змейка еду
         ate_food = (self.game.snake.body[0] == self.game.food.position)
-        
-        # Требование: исчезновение еды по таймеру
         if self.game.food.is_expired() and not ate_food:
             self.game.food.respawn(self.game.snake.body)
 
@@ -48,31 +45,24 @@ class Playing:
         head = self.game.snake.body[0]
         
         if ate_food:
-            # Требование: начисление очков согласно весу еды
             self.score += self.game.food.weight
             self.game.food.respawn(self.game.snake.body)
             
-            # Повышение уровня за каждые 5 очков
             if self.score // 5 >= self.level and self.level < 10:
                 self.level += 1    
             
-        # Проверка столкновения с самим собой
         if head in self.game.snake.body[1:]:
             self.game.state = GameOver(self.game)
         
     def draw(self, screen):
         screen.fill((20, 20, 20))
-        
-        # Отрисовка еды (Цвет меняется в зависимости от веса для наглядности)
         colors = {1: (255, 0, 0), 2: (255, 255, 0), 3: (255, 0, 255)}
         food_color = colors.get(self.game.food.weight, (255, 0, 0))
         pygame.draw.rect(screen, food_color, (*self.game.food.position, 20, 20))
         
-        # Отрисовка змейки
         for segment in self.game.snake.body:
             pygame.draw.rect(screen, (0, 200, 0), (*segment, 20, 20))
             
-        # Отрисовка интерфейса
         font = pygame.font.SysFont('Arial', 20)
         info_text = font.render(f"Level: {self.level} Score: {self.score} Weight: {self.game.food.weight}", True, (255, 255, 255))
         screen.blit(info_text, (10, 10))
