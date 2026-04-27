@@ -6,6 +6,9 @@ import sprites
 
 def main():
     pygame.init()
+    # Сбрасываем статы при старте
+    sprites.SCORE = 0
+    sprites.SPEED = 3
 
     FPS = 165
     FramePerSec = pygame.time.Clock()
@@ -18,7 +21,6 @@ def main():
     background = pygame.transform.scale(background, (400, 600))
 
     SCREEN = pygame.display.set_mode((sprites.WIDTH, sprites.HEIGHT))
-    SCREEN.fill(sprites.WHITE)
     pygame.display.set_caption("Racer")
             
     P1 = sprites.Player()
@@ -29,60 +31,82 @@ def main():
     coins = pygame.sprite.Group()
     enemies.add(E1)
     coins.add(C)
+    
     all_sprites = pygame.sprite.Group()
     all_sprites.add(P1)
     all_sprites.add(E1)
+    all_sprites.add(C) 
 
-    INC_SPEED = pygame.USEREVENT + 1
-    pygame.time.set_timer(INC_SPEED, 1000)
+    # Переменные для анимации бесконечного фона
+    bg_y1 = 0
+    bg_y2 = -sprites.HEIGHT
 
     while True:
         for event in pygame.event.get():
-            if event.type == INC_SPEED:
-                sprites.SPEED += 0.5
-            
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-                
-        SCREEN.blit(background, (0, 0))
-        scores = font_small.render("SCORES:  " + str(sprites.SCORE), True, sprites.GREEN)        
+        
+        # Движение фона
+        bg_y1 += sprites.SPEED
+        bg_y2 += sprites.SPEED
+        if bg_y1 >= sprites.HEIGHT: bg_y1 = -sprites.HEIGHT
+        if bg_y2 >= sprites.HEIGHT: bg_y2 = -sprites.HEIGHT
+
+        SCREEN.blit(background, (0, bg_y1))
+        SCREEN.blit(background, (0, bg_y2))
+
+        # Отрисовка счета
+        scores = font_small.render("SCORES: " + str(sprites.SCORE), True, sprites.GREEN)        
         SCREEN.blit(scores, (10, 10))
         
+        # Обновление и отрисовка всех объектов
         for entity in all_sprites:
             SCREEN.blit(entity.image, entity.rect)
             entity.move()
             
-        for coin in coins:
-            SCREEN.blit(coin.image, coin.rect)
-            
+        # Проверка столкновения с врагом
         if pygame.sprite.spritecollideany(P1, enemies):
             pygame.mixer.Sound("C:/Users/suanb/Desktop/pp2/Practice10/carracer/images_and_sounds/accident.mp3").play()
             time.sleep(0.5)
             
             SCREEN.fill(sprites.RED)
-            SCREEN.blit(game_over, (30, 250))
+            # Центрируем надписи (Требование по оформлению)
+            SCREEN.blit(game_over, game_over.get_rect(center=(sprites.WIDTH//2, 250)))
+            
+            font_restart = pygame.font.SysFont("Verdana", 20)
+            retry_text = font_restart.render("R - Restart or Q - Quit", True, sprites.WHITE)
+            SCREEN.blit(retry_text, retry_text.get_rect(center=(sprites.WIDTH//2, 350)))
             
             pygame.display.update()
-            for entity in all_sprites:
-                entity.kill()
             
-            time.sleep(2)
-            pygame.quit()
-            sys.exit()
+            waiting = True
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == KEYDOWN:
+                        if event.key == K_r: main()
+                        if event.key == K_q:
+                            pygame.quit()
+                            sys.exit()
             
-        if pygame.sprite.spritecollideany(P1, coins):
-            sprites.SCORE += 1
+        # Проверка сбора монет
+        collided_coin = pygame.sprite.spritecollideany(P1, coins)
+        if collided_coin:
+            # 1. Прибавляем вес монетки (Разный вес монет)
+            sprites.SCORE += collided_coin.weight 
+            
+            # 2. Увеличиваем скорость врагов каждые 10 очков (N монет)
+            if sprites.SCORE % 10 == 0:
+                sprites.SPEED += 0.5
+            
             pygame.mixer.Sound("C:/Users/suanb/Desktop/pp2/Practice10/carracer/images_and_sounds/coin_taken.wav").play()
-            for coin in coins:
-                coin.rect.center = (random.randint(40, sprites.WIDTH - 40), 500)
-
-                while pygame.sprite.collide_rect(coin, P1):
-                    coin.rect.center = (random.randint(40, sprites.WIDTH - 40), 500)
+            collided_coin.reset() # Используем метод из sprites.py для респауна
         
         pygame.display.update()
         FramePerSec.tick(FPS)
 
 if __name__ == '__main__':
     main()
-    
