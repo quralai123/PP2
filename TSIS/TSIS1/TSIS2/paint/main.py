@@ -1,127 +1,123 @@
-import pygame
-import sys
-import math
+import pygame, sys, math
+from datetime import datetime
 
-# Инициализация
 pygame.init()
+W, H = 1100, 750
+screen = pygame.display.set_mode((W, H))
+clock = pygame.time.Clock()
 
-# Настройки экрана
-WIDTH, HEIGHT = 1100, 750 
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GRAY = (220, 220, 220)
-DARK_GRAY = (180, 180, 180)
-BLUE_SELECT = (0, 120, 215) 
+WHITE, BLACK, GRAY, DARK_GRAY, BLUE = (255,255,255), (0,0,0), (220,220,220), (180,180,180), (0,120,215)
+PALETTE = [(255,0,0), (255,192,203), (255,165,0), (255,255,0), (0,255,0), (0,191,255), (0,0,255), (128,0,128), (0,0,0), (255,255,255)]
+TOOLS = ['brush', 'line', 'rectangle', 'square', 'circle', 'right_triangle', 'equilateral_triangle', 'rhombus', 'fill', 'text', 'erase']
+SIZES = [(2, '1', 'S'), (5, '2', 'M'), (10, '3', 'L')]
 
-PALETTE = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 0, 0)]
-
-# Добавили 'Brush' в начало списка инструментов
-TOOLS = [
-    ('Brush', 'brush'), ('Rect', 'rectangle'), ('Circle', 'circle'), 
-    ('Square', 'square'), ('R-Tri', 'right_triangle'), 
-    ('E-Tri', 'equilateral_triangle'), ('Rhombus', 'rhombus'), ('Eraser', 'erase')
-]
-
-def draw_shape(surface, mode, start_pos, end_pos, color, thickness):
-    x1, y1 = start_pos
-    x2, y2 = end_pos
-    if mode == 'rectangle':
-        pygame.draw.rect(surface, color, (min(x1, x2), min(y1, y2), abs(x2 - x1), abs(y2 - y1)), thickness)
-    elif mode == 'square':
-        side = max(abs(x2 - x1), abs(y2 - y1))
-        pygame.draw.rect(surface, color, (min(x1, x2), min(y1, y2), side, side), thickness)
-    elif mode == 'circle':
-        r = int(math.hypot(x2 - x1, y2 - y1))
-        pygame.draw.circle(surface, color, start_pos, r, thickness)
-    elif mode == 'right_triangle':
-        pygame.draw.polygon(surface, color, [(x1, y1), (x1, y2), (x2, y2)], thickness)
-    elif mode == 'equilateral_triangle':
-        height = (y2 - y1)
-        side = abs(height) * 2 / math.sqrt(3)
-        pygame.draw.polygon(surface, color, [(x1, y1), (x1 - side/2, y2), (x1 + side/2, y2)], thickness)
-    elif mode == 'rhombus':
-        pygame.draw.polygon(surface, color, [((x1+x2)/2, y1), (x2, (y1+y2)/2), ((x1+x2)/2, y2), (x1, (y1+y2)/2)], thickness)
+def draw_shape(surf, mode, p1, p2, col, th):
+    x1, y1, x2, y2 = *p1, *p2
+    w, h = abs(x2-x1), abs(y2-y1)
+    if mode == 'line': pygame.draw.line(surf, col, p1, p2, th)
+    elif mode == 'rectangle': pygame.draw.rect(surf, col, (min(x1,x2), min(y1,y2), w, h), th)
+    elif mode == 'square': 
+        s = max(w, h)
+        pygame.draw.rect(surf, col, (min(x1,x2), min(y1,y2), s, s), th)
+    elif mode == 'circle': pygame.draw.circle(surf, col, p1, int(math.hypot(x2-x1, y2-y1)), th)
+    elif mode in ['right_triangle', 'equilateral_triangle', 'rhombus']:
+        pts = [(x1,y1), (x1,y2), (x2,y2)] if mode == 'right_triangle' else \
+              [(x1,y1), (x1-h/1.73, y2), (x1+h/1.73, y2)] if mode == 'equilateral_triangle' else \
+              [(x1+ (x2-x1)/2, y1), (x2, y1+(y2-y1)/2), (x1+(x2-x1)/2, y2), (x1, y1+(y2-y1)/2)]
+        pygame.draw.polygon(surf, col, pts, th)
+def flood_fill(surf, pos, fill_color):
+    target_color = surf.get_at(pos)
+    if target_color == fill_color: return
+    
+    width, height = surf.get_size()
+    pixels = [pos]
+    
+    while pixels:
+        x, y = pixels.pop()
+        if surf.get_at((x, y)) != target_color:
+            continue
+            surf.set_at((x, y), fill_color)
+        
+        if x + 1 < width:  pixels.append((x + 1, y))
+        if x - 1 >= 0:     pixels.append((x - 1, y))
+        if y + 1 < height: pixels.append((x, y + 1))
+        if y - 1 >= 80:    pixels.append((x, y - 1))
 
 def main():
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Paint with Brush and Shapes")
-    clock = pygame.time.Clock()
-    
-    canvas = pygame.Surface((WIDTH, HEIGHT))
-    canvas.fill(WHITE)
-    
-    font = pygame.font.SysFont("Arial", 14, bold=True)
-    current_color = PALETTE[0]
-    mode = 'brush' # Теперь кисть по умолчанию
-    drawing = False
-    start_pos = None
-    last_pos = None # Нужно для плавности кисти
+    canvas = pygame.Surface((W, H)); canvas.fill(WHITE)
+    font, font_draw = pygame.font.SysFont("Arial", 12, bold=True), pygame.font.SysFont("Arial", 24)
+    cur_col, cur_th, mode, drawing, active_text, text_in = BLACK, 2, 'brush', False, False, ""
+    p1 = last_pos = (0,0)
 
     while True:
-        screen.fill(WHITE)
-        screen.blit(canvas, (0, 0))
+        screen.fill(WHITE); screen.blit(canvas, (0, 0))
+        m_pos = pygame.mouse.get_pos()
+        ctrl = pygame.key.get_pressed()[pygame.K_LCTRL] or pygame.key.get_pressed()[pygame.K_RCTRL]
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+            if event.type == pygame.QUIT: pygame.quit(); sys.exit()
             
+            if event.type == pygame.KEYDOWN:
+                if ctrl and event.key == pygame.K_s:
+                    pygame.image.save(canvas, f"img_{datetime.now().strftime('%M%S')}.png")
+                if active_text:
+                    if event.key == pygame.K_RETURN: 
+                        canvas.blit(font_draw.render(text_in, True, cur_col), p1)
+                        active_text, text_in = False, ""
+                    elif event.key == pygame.K_BACKSPACE: text_in = text_in[:-1]
+                    else: text_in += event.unicode
+                elif event.key in [pygame.K_1, pygame.K_2, pygame.K_3]:
+                    cur_th = SIZES[int(event.unicode)-1][0]
+
             if event.type == pygame.MOUSEBUTTONDOWN:
-                x, y = event.pos
-                if y < 60: # Клик в меню
-                    for i, col in enumerate(PALETTE):
-                        if pygame.Rect(10 + i * 40, 15, 30, 30).collidepoint(x, y):
-                            current_color = col
-                    for i, (name, m) in enumerate(TOOLS):
-                        button_rect = pygame.Rect(260 + i * 90, 15, 85, 30)
-                        if button_rect.collidepoint(x, y):
-                            mode = m
-                else: 
-                    drawing = True
-                    start_pos = event.pos
-                    last_pos = event.pos
+                if m_pos[1] < 80: 
+                    for i, c in enumerate(PALETTE):
+                        if pygame.Rect(10+(i%5)*35, 10+(i//5)*25, 30, 20).collidepoint(m_pos): cur_col = c
+                    for i, m in enumerate(TOOLS):
+                        if pygame.Rect(200+(i%6)*45, 10+(i//6)*32, 42, 28).collidepoint(m_pos): 
+                            mode, active_text = m, False
+                    for i, (val, key, lbl) in enumerate(SIZES):
+                        if pygame.Rect(500 + i * 50, 10, 45, 45).collidepoint(m_pos): cur_th = val
+                else:
+                    p1 = last_pos = m_pos
+                    if mode == 'text': active_text, text_in = True, ""
+                    elif mode == 'fill':
+                        flood_fill(canvas, event.pos, cur_col)
+                    else: drawing = True
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if drawing:
-                    # Фиксируем фигуру, если это не кисть и не ластик
-                    if mode not in ['brush', 'erase']:
-                        draw_shape(canvas, mode, start_pos, event.pos, current_color, 2)
+                    if mode not in ['brush', 'erase']: draw_shape(canvas, mode, p1, m_pos, cur_col, cur_th)
                     drawing = False
+            
+            if event.type == pygame.MOUSEMOTION and drawing:
+                if mode == 'brush': 
+                    pygame.draw.line(canvas, cur_col, last_pos, m_pos, cur_th); last_pos = m_pos
+                elif mode == 'erase': pygame.draw.circle(canvas, WHITE, m_pos, 20)
 
-            if event.type == pygame.MOUSEMOTION:
-                if drawing:
-                    curr_pos = event.pos
-                    # КИСТЬ И ЛАСТИК рисуют сразу на холсте (canvas)
-                    if mode == 'brush':
-                        pygame.draw.line(canvas, current_color, last_pos, curr_pos, 3)
-                        last_pos = curr_pos
-                    elif mode == 'erase':
-                        pygame.draw.circle(canvas, WHITE, curr_pos, 20)
-                        last_pos = curr_pos
-
-        # ОТРИСОВКА ПРЕВЬЮ ДЛЯ ФИГУР
-        if drawing and mode not in ['brush', 'erase']:
-            curr_pos = pygame.mouse.get_pos()
-            draw_shape(screen, mode, start_pos, curr_pos, current_color, 2)
-
-        # РИСУЕМ ПАНЕЛЬ (UI)
-        pygame.draw.rect(screen, GRAY, (0, 0, WIDTH, 60))
-        pygame.draw.line(screen, BLACK, (0, 60), (WIDTH, 60), 2)
+        if drawing and mode not in ['brush', 'erase']: draw_shape(screen, mode, p1, m_pos, cur_col, cur_th)
+        if active_text: screen.blit(font_draw.render(text_in + "|", True, cur_col), p1)
         
-        for i, col in enumerate(PALETTE):
-            rect = pygame.Rect(10 + i * 40, 15, 30, 30)
-            pygame.draw.rect(screen, col, rect)
-            if col == current_color and mode not in ['erase']:
-                pygame.draw.rect(screen, BLACK, rect, 2)
+        pygame.draw.rect(screen, GRAY, (0, 0, W, 80))
+        pygame.draw.line(screen, BLACK, (0, 80), (W, 80), 2)
+        
+        for i, c in enumerate(PALETTE):
+            r = pygame.Rect(10+(i%5)*35, 10+(i//5)*25, 30, 20)
+            pygame.draw.rect(screen, c, r)
+            if c == cur_col: pygame.draw.rect(screen, BLACK, r, 2)
+        
+        for i, m in enumerate(TOOLS):
+            r = pygame.Rect(200+(i%6)*45, 10+(i//6)*32, 42, 28)
+            pygame.draw.rect(screen, BLUE if mode == m else DARK_GRAY, r, border_radius=4)
+            txt = font.render(m[:5].upper(), True, WHITE if mode == m else BLACK)
+            screen.blit(txt, txt.get_rect(center=r.center))
 
-        for i, (name, m) in enumerate(TOOLS):
-            btn_rect = pygame.Rect(260 + i * 90, 15, 85, 30)
-            bg_color = BLUE_SELECT if mode == m else DARK_GRAY
-            pygame.draw.rect(screen, bg_color, btn_rect, border_radius=5)
-            text = font.render(name, True, WHITE if mode == m else BLACK)
-            screen.blit(text, text.get_rect(center=btn_rect.center))
+        for i, (val, key, lbl) in enumerate(SIZES):
+            r = pygame.Rect(500 + i * 50, 10, 45, 45)
+            pygame.draw.rect(screen, BLUE if cur_th == val else DARK_GRAY, r, border_radius=22)
+            txt = font.render(lbl, True, WHITE)
+            screen.blit(txt, txt.get_rect(center=r.center))
 
-        pygame.display.flip()
-        clock.tick(120) # 120 FPS для плавности кисти
+        pygame.display.flip(); clock.tick(120)
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
