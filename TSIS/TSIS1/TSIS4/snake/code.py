@@ -12,14 +12,11 @@ def get_connection():
         port="5433"
     )
 
-
-
 class DBManager:
     def save_result(self, username, score, level):
         conn = get_connection()
         try:
             with conn.cursor() as cursor:
-                # 1. Находим или создаем игрока
                 cursor.execute(
                     "INSERT INTO players (username) VALUES (%s) ON CONFLICT (username) DO NOTHING RETURNING id;",
                     (username,)
@@ -31,7 +28,6 @@ class DBManager:
                     cursor.execute("SELECT id FROM players WHERE username = %s;", (username,))
                     player_id = cursor.fetchone()[0]
 
-                # 2. Записываем сессию
                 cursor.execute(
                     "INSERT INTO game_sessions (player_id, score, level_reached) VALUES (%s, %s, %s);",
                     (player_id, score, level)
@@ -42,6 +38,7 @@ class DBManager:
             print(f"[DB] Error saving: {e}")
         finally:
             conn.close()
+    
     def get_top_10(self):
         conn = get_connection()
         try:

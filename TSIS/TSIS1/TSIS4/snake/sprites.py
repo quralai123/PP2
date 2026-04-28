@@ -37,7 +37,6 @@ class Food:
         self.lifetime = 5000        # 5 секунд жизни
         self.respawn([])            # Первичный спавн при создании объекта
 
-    # sprites.py
     def respawn(self, snake_body, obstacles=[]):
         while True:
             new_pos = (random.randrange(0, 600, 20), random.randrange(0, 600, 20))
@@ -51,7 +50,6 @@ class Food:
         self.spawn_time = pygame.time.get_ticks()
         
     def is_expired(self):
-        """Проверяет, прошло ли более 5 секунд с момента появления."""
         current_time = pygame.time.get_ticks()
         return current_time - self.spawn_time > self.lifetime
   
@@ -86,18 +84,12 @@ class Obstacles:
     def generate(self, level, snake_body):
         self.blocks = []
         if level < 3: return # Стены только с 3 уровня
-        
-        # Количество блоков зависит от уровня (например, 3 блока на 3-м уровне, 4 на 4-м и т.д.)
         num_blocks = level + 2 
         
         while len(self.blocks) < num_blocks:
             x = random.randrange(0, 600, 20)
             y = random.randrange(0, 600, 20)
             pos = (x, y)
-            
-            # Правила спавна:
-            # 1. Не на змейке
-            # 2. Не слишком близко к голове (минимум 3 клетки отступа), чтобы не запереть игрока
             head_x, head_y = snake_body[0]
             distance = abs(x - head_x) + abs(y - head_y)
             

@@ -1,1 +1,0 @@
-  self.death_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS1/TSIS4/sounds/death.mp3")
