@@ -38,7 +38,7 @@ class Food:
         self.respawn([])            # Первичный спавн при создании объекта
 
     # sprites.py
-    def respawn(self, snake_body):
+    def respawn(self, snake_body, obstacles=[]):
         while True:
             new_pos = (random.randrange(0, 600, 20), random.randrange(0, 600, 20))
             if new_pos not in snake_body:
@@ -55,3 +55,51 @@ class Food:
         current_time = pygame.time.get_ticks()
         return current_time - self.spawn_time > self.lifetime
   
+
+class PowerUp:
+    def __init__(self):
+        self.position = None
+        self.type = None  # 'speed', 'slow', 'shield'
+        self.spawn_time = 0
+        self.lifetime = 8000  # Исчезает через 8 секунд
+        self.active = False
+
+    def spawn(self, snake_body, food_pos, obstacles=[]):
+        while True:
+            new_pos = (random.randrange(0, 600, 20), random.randrange(0, 600, 20))
+            if new_pos not in snake_body and new_pos != food_pos:
+                self.position = new_pos
+                break
+        
+        self.type = random.choice(['speed', 'slow', 'shield'])
+        self.spawn_time = pygame.time.get_ticks()
+        self.active = True
+
+    def is_expired(self):
+        if not self.active: return False
+        return pygame.time.get_ticks() - self.spawn_time > self.lifetime
+    
+class Obstacles:
+    def __init__(self):
+        self.blocks = []
+
+    def generate(self, level, snake_body):
+        self.blocks = []
+        if level < 3: return # Стены только с 3 уровня
+        
+        # Количество блоков зависит от уровня (например, 3 блока на 3-м уровне, 4 на 4-м и т.д.)
+        num_blocks = level + 2 
+        
+        while len(self.blocks) < num_blocks:
+            x = random.randrange(0, 600, 20)
+            y = random.randrange(0, 600, 20)
+            pos = (x, y)
+            
+            # Правила спавна:
+            # 1. Не на змейке
+            # 2. Не слишком близко к голове (минимум 3 клетки отступа), чтобы не запереть игрока
+            head_x, head_y = snake_body[0]
+            distance = abs(x - head_x) + abs(y - head_y)
+            
+            if pos not in snake_body and distance > 60:
+                self.blocks.append(pos)
