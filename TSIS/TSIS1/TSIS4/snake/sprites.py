@@ -32,10 +32,12 @@ class Food:
     def __init__(self):
         self.position = (0, 0)
         self.weight = 1
-        self.spawn_time = 0 # Время появления еды
-        self.lifetime = 5000 # Время жизни еды в миллисекундах (5 секунд)
-        self.respawn([])
-        
+        self.is_poison = False      # Флаг: ядовитая еда или обычная
+        self.spawn_time = 0         # Время появления (для таймера жизни)
+        self.lifetime = 5000        # 5 секунд жизни
+        self.respawn([])            # Первичный спавн при создании объекта
+
+    # sprites.py
     def respawn(self, snake_body):
         while True:
             new_pos = (random.randrange(0, 600, 20), random.randrange(0, 600, 20))
@@ -43,9 +45,13 @@ class Food:
                 self.position = new_pos
                 break
         
-        self.weight = random.randint(1, 3)
+        # Шанс 20% на яд
+        self.is_poison = random.random() < 0.2
+        self.weight = 0 if self.is_poison else random.randint(1, 3)
         self.spawn_time = pygame.time.get_ticks()
-
+        
     def is_expired(self):
+        """Проверяет, прошло ли более 5 секунд с момента появления."""
         current_time = pygame.time.get_ticks()
         return current_time - self.spawn_time > self.lifetime
+  

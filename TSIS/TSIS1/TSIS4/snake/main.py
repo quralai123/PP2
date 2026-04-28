@@ -3,9 +3,13 @@ from pygame.locals import *
 from scenes import Title, Playing
 import sprites
 import sys
+from code import DBManager # Проверь, что этот импорт есть вверху
 
 class Game:
     def __init__(self):
+        self.db = DBManager() # 2. ОБЯЗАТЕЛЬНО С ЭТИМ ИМЕНЕМ
+        self.current_username = "Guest"
+        self.last_score = 0
         self.snake = sprites.Snake()
         self.food = sprites.Food()
         self.state = Title(self)
