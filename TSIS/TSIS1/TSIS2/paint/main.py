@@ -36,7 +36,7 @@ def flood_fill(surf, pos, fill_color):
         x, y = pixels.pop()
         if surf.get_at((x, y)) != target_color:
             continue
-            surf.set_at((x, y), fill_color)
+        surf.set_at((x, y), fill_color)
         
         if x + 1 < width:  pixels.append((x + 1, y))
         if x - 1 >= 0:     pixels.append((x - 1, y))
