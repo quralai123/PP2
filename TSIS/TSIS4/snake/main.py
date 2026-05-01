@@ -38,10 +38,10 @@ class Game:
         self.settings = SettingsManager()
         pygame.mixer.init() 
 
-        self.eat_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS1/TSIS4/sounds/eat.mp3")
-        self.poison_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS1/TSIS4/sounds/poison.wav")
-        self.powerup_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS1/TSIS4/sounds/powerup.wav")
-        self.death_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS1/TSIS4/sounds/d.mp3")
+        self.eat_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS4/sounds/eat.mp3")
+        self.poison_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS4/sounds/poison.wav")
+        self.powerup_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS4/sounds/powerup.wav")
+        self.death_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS4/sounds/d.mp3")
 
 
 def main():

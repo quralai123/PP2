@@ -221,7 +221,7 @@ class Playing:
         self.score = 0
         self.level = 1
         self.personal_best = self.game.db.get_personal_best(self.game.current_username)
-        self.death_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS1/TSIS4/sounds/d.mp3") 
+        self.death_sound = pygame.mixer.Sound("c:/Users/suanb/Desktop/pp2/TSIS/TSIS4/sounds/d.mp3") 
         self.game.snake.__init__()
         self.game.food.respawn(self.game.snake.body) 
         
