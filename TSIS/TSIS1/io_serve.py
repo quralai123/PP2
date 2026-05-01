@@ -1,36 +1,28 @@
 import json
 import csv
-# Мы убираем импорт cursor и conn из phonebook, 
-# и вместо этого берем инструменты напрямую из connect.py
+import os
 from connect import connect, parse_date 
 from phonebook import get_group_id
 
-# Создаем подключение здесь локально, чтобы файл был независимым
 conn = connect()
-cursor = conn.cursor()
+if conn:
+    cursor = conn.cursor()
+else:
+    print("Не удалось подключиться к базе данных. connect.py")
+    exit()
 
-
-# EXPORT TO JSON
 def export_to_json(filename="TSIS/TSIS1/contacts.json"):
     cursor.execute("""
         SELECT c.id, c.name, c.email, c.birthday, g.name
         FROM contacts c
         LEFT JOIN groups g ON g.id = c.group_id
     """)
-
     contacts = cursor.fetchall()
-
     result = []
 
     for c in contacts:
         contact_id = c[0]
-
-        cursor.execute("""
-            SELECT number, type
-            FROM phones
-            WHERE contact_id = %s
-        """, (contact_id,))
-
+        cursor.execute("SELECT number, type FROM phones WHERE contact_id = %s", (contact_id,))
         phones = cursor.fetchall()
 
         result.append({
@@ -39,99 +31,37 @@ def export_to_json(filename="TSIS/TSIS1/contacts.json"):
             "email": c[2],
             "birthday": str(c[3]) if c[3] else None,
             "group": c[4],
-            "phones": [
-                {"number": p[0], "type": p[1]} for p in phones
-            ]
+            "phones": [{"number": p[0], "type": p[1]} for p in phones]
         })
 
+    # Создаем папку, если её нет
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=4)
+        json.dump(result, f, indent=4, ensure_ascii=False)
+    print(f"Данные экспортированы в {filename}")
 
-    print("Exported to JSON")
-
-
-# IMPORT FROM JSON
-def import_from_json(filename="TSIS/TSIS1/contacts.json"):
-    with open(filename, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    for item in data:
-        name = item["name"]
-
-        cursor.execute("SELECT id FROM contacts WHERE name = %s", (name,))
-        exist = cursor.fetchone()
-
-        if exist:
-            print(f"{name} already exists")
-            action = input("skip / overwrite: ").strip().lower()
-
-            if action == "skip":
-                continue
-
-            if action == "overwrite":
-                cursor.execute("DELETE FROM contacts WHERE id = %s", (exist[0],))
-
-        group_id = get_group_id(item.get("group"))
-
-        cursor.execute("""
-            INSERT INTO contacts (name, email, birthday, group_id)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id
-        """, (
-            item["name"],
-            item.get("email"),
-            parse_date(item.get("birthday")),
-            group_id
-        ))
-
-        contact_id = cursor.fetchone()[0]
-
-        for phone in item.get("phones", []):
-            cursor.execute("""
-                INSERT INTO phones (contact_id, number, type)
-                VALUES (%s, %s, %s)
-            """, (
-                contact_id,
-                phone["number"],
-                phone["type"]
-            ))
-
-    conn.commit()
-    print("Imported from JSON")
-
-
-# IMPORT FROM CSV (UPDATED)
-
-
-def reading_csv(path: str = "C:/Users/suanb/Desktop/pp2/TSIS/TSIS1/contacts.csv"):
+def reading_csv(path):
     with open(path, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
-
+        count = 0
         for row in reader:
-            name  = row.get('name', '').strip()
+            name = row.get('name', '').strip()
             phone = row.get('phone', '').strip()
 
             if not name or not phone:
-                print("Skipping incomplete row:", row)
                 continue
 
             phone_type = row.get('type', 'mobile').strip().lower()
             if phone_type not in ("home", "work", "mobile"):
                 phone_type = "mobile"
 
-            email    = row.get('email', '').strip() or None
+            email = row.get('email', '').strip() or None
             birthday = parse_date(row.get('birthday', '').strip())
             group_name = row.get('group', '').strip()
             group_id = get_group_id(group_name)
 
-            if group_id is None and group_name:
-                print("Unknown group:", group_name)
-
-            # ── SAVEPOINT чтобы не ломать всю транзакцию
             cursor.execute("SAVEPOINT sp")
-
             try:
-                # ── Проверяем, есть ли уже контакт
                 cursor.execute(
                     "SELECT id FROM contacts WHERE name = %s AND email IS NOT DISTINCT FROM %s",
                     (name, email)
@@ -148,34 +78,27 @@ def reading_csv(path: str = "C:/Users/suanb/Desktop/pp2/TSIS/TSIS1/contacts.csv"
                     )
                     contact_id = cursor.fetchone()[0]
 
-                # ── Добавляем телефон
                 cursor.execute(
                     "INSERT INTO phones (contact_id, number, type) "
                     "VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                     (contact_id, phone, phone_type)
                 )
-
+                count += 1
             except Exception as e:
                 cursor.execute("ROLLBACK TO SAVEPOINT sp")
-                print("Error processing row:", row, "|", e)
-
-    conn.commit()
-    print("CSV import completed")
-
-
-
+                print(f"Ошибка в строке {row}: {e}")
+        
+        conn.commit()
+        print(f"Успешно обработано строк: {count}")
 
 if __name__ == "__main__":
-    import os
+    csv_path = "C:/Users/suanb/Desktop/pp2/TSIS/TSIS1/contacts.csv"
     
-    path = "C:/Users/suanb/Desktop/pp2/TSIS/TSIS1/contacts.csv"
-    
-    if not os.path.exists(path):
-        print(f"❌ ОШИБКА: Файл не найден по пути {path}")
+    if os.path.exists(csv_path):
+        reading_csv(csv_path)
     else:
-        print(f"✅ Файл найден, начинаю импорт...")
-        try:
-            reading_csv(path)
-            print("🚀 Импорт завершен!")
-        except Exception as e:
-            print(f"❌ Произошла критическая ошибка: {e}")
+        print(f"Файл не найден: {csv_path}")
+        export_to_json()
+
+    cursor.close()
+    conn.close()
