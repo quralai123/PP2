@@ -4,7 +4,6 @@ conn = connect()
 cursor = conn.cursor()
 
 def test_add_phone():
-    # Спрашиваем данные у пользователя, а не используем Алису
     name = input("Имя контакта: ")
     phone = input("Номер телефона: ")
     p_type = input("Тип (home/work/mobile): ")
@@ -23,7 +22,6 @@ def test_move_group():
 
 def test_search():
     query = input("Введите текст для поиска: ")
-    # Используем SELECT, так как функция возвращает таблицу строк
     cursor.execute("SELECT * FROM search_contacts(%s);", (query,))
     rows = cursor.fetchall()
 
@@ -32,7 +30,6 @@ def test_search():
     for r in rows:
         print(r)
 
-# Далее твой цикл while True без изменений...
 
 while True:
     print("""

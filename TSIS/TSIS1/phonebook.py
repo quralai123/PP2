@@ -4,7 +4,6 @@ from connect import connect
 conn = connect()
 cursor = conn.cursor()
 
-# Schema
 
 def init_db():
     with open("TSIS/TSIS1/schema.sql", "r", encoding="utf-8") as f:
@@ -35,7 +34,7 @@ def parse_date(date_str: str):
         print("Invalid date:", date_str)
         return None
 
-# Console insert
+
 def reading_from_console():
     name       = input("Name: ").strip()
     phone      = input("Phone: ").strip()
@@ -65,7 +64,6 @@ def reading_from_console():
     print("Added")
 
 
-# Update
 def update_contact(contact_id, email=None, birthday=None, group_name=None):
     updates, params = [], []
 
@@ -104,7 +102,6 @@ def update_phone(contact_id, old_number, new_number):
     print("Phone updated")
 
 
-# Filter
 def filtering(name=None, phone_prefix=None, group_name=None, email=None):
     query = '''
         SELECT c.id, c.name, c.email, c.birthday, g.name,
@@ -142,7 +139,6 @@ def filtering(name=None, phone_prefix=None, group_name=None, email=None):
         print("No contacts found")
 
 
-# Delete
 def delete_by_name(name):
     cursor.execute("DELETE FROM contacts WHERE name = %s", (name,))
     conn.commit()

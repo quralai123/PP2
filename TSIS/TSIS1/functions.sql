@@ -1,4 +1,3 @@
--- FUNCTION: search_contacts
 
 CREATE OR REPLACE FUNCTION search_contacts(p_query TEXT)
 RETURNS TABLE (
