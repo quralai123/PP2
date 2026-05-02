@@ -8,11 +8,12 @@ VALUES ('Family'), ('Work'), ('Friend'), ('Other')
 ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS contacts (
-    id       SERIAL PRIMARY KEY,
-    name     VARCHAR(100) NOT NULL,
-    email    VARCHAR(150),
-    birthday DATE,
-    group_id INT REFERENCES groups(id) ON DELETE SET NULL
+    id         SERIAL PRIMARY KEY,
+    name       VARCHAR(100) NOT NULL,
+    email      VARCHAR(150),
+    birthday   DATE,
+    group_id   INT REFERENCES groups(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- <--- Добавь это
 );
 
 CREATE TABLE IF NOT EXISTS phones (
